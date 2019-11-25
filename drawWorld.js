@@ -1,10 +1,10 @@
-const { createCanvas } = require('canvas');
+const { createCanvas, registerFont } = require('canvas');
 const fs = require('fs');
 const _ = require('lodash');
 const { Vector2 } = require('three');
 const _N = require('@wonderlandlabs/n');
 
-console.log('_N:', _N);
+registerFont('Helvetica.ttf', { family: 'Helvetica' });
 
 module.exports = (world, config = {}, fileName = 'worldMap') => {
   const pixelsPerHex = _.get(config, 'pixelsPerHex', 5);
@@ -13,16 +13,17 @@ module.exports = (world, config = {}, fileName = 'worldMap') => {
   const mapHeight = (180 * pixelsPerHex) + (2 * padding);
   const mapWidth = ((rightOverlap + 360) * pixelsPerHex) + (2 * padding);
   const degreeInc = _.get(config, 'degreeInc', 10);
-  const fn = _.get(config, 'draw', () => {});
+  const fn = _.get(config, 'fn', () => {});
 
   const can = createCanvas(mapWidth, mapHeight);
   const ctx = can.getContext('2d');
 
-  const loopPoints = (points) => {
+  const loopLonLatSeries = (points) => {
     points.push(points[0]);
 
-    const xs = _.map(points, 0);
-    if ((_.max(xs) - _.min(xs)) > 180) {
+    const longitudes = _.map(points, 0);
+    const longRange = (_.max(longitudes) - _.min(longitudes));
+    if (longRange > 180) {
       points.forEach((coord) => { if (coord[0] < 180) coord[0] += 360; });
     }
   };
@@ -45,6 +46,7 @@ module.exports = (world, config = {}, fileName = 'worldMap') => {
     return new Vector2(x.value, y);
   };
 
+  const lonLatToV2 = (lon, lat) => latLonToV2(lat, lon);
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
   ctx.rect(-1, -1, mapWidth + 2, mapHeight + 2);
@@ -93,12 +95,12 @@ module.exports = (world, config = {}, fileName = 'worldMap') => {
   ctx.beginPath();
   world.iso.faces.forEach((face) => {
     const { a, b, c } = face;
-    const points = [a, b, c].map((i) => world.latLon(i));
+    const points = [a, b, c].map((i) => world.lonLat(i));
     // console.log('points:', points);
-    loopPoints(points);
+    loopLonLatSeries(points);
 
     points.forEach(([longitude, latitude], i) => {
-      const v = latLonToV2(latitude, longitude);
+      const v = lonLatToV2(longitude, latitude);
       if (i) {
         ctx.lineTo(v.x, v.y);
       } else {
@@ -114,7 +116,7 @@ module.exports = (world, config = {}, fileName = 'worldMap') => {
   world.hexList().forEach((hex, i) => {
     const lonLats = hex.cornerLonLats();
     const points = lonLats.map(([longitude, latitude]) => latLonToV2(latitude, longitude));
-    loopPoints(points);
+    loopLonLatSeries(points);
 
     ctx.beginPath();
     ctx.fillStyle = `rgba(${_.random(0, 255)},${_.random(128, 255)},255,0.25)`;
@@ -131,7 +133,7 @@ module.exports = (world, config = {}, fileName = 'worldMap') => {
   });
 
 
-  fn(ctx);
+  fn({ ctx, can }, lonLatToV2);
 
   can.createPNGStream().pipe(fs.createWriteStream(`${fileName}.png`));
 };

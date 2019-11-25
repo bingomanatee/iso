@@ -13,7 +13,7 @@ export default class World {
     this.iso = new IcosahedronGeometry(1, this.detail); // always platonic radius
   }
 
-  latLon(i) {
+  lonLat(i) {
     return vector3toLonLat(this.vertex(i));
   }
 

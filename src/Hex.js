@@ -8,6 +8,9 @@ import {
   lonLatToVector3, vector3toLonLat, unifyLongitudes, cleanV3,
 } from './utils';
 
+const NORTH = new Vector3(0, 1, 0);
+const LAT90 = new Vector3(1, 0, 0);
+
 /**
  * the voronoi region surrounding a point. Not always a hexagon - there are
  * 20 pentagons surrounding the original points.
@@ -21,6 +24,10 @@ export default class Hex {
   get centerPoint() {
     if (!this._centerPoint) this._centerPoint = this.world.vertex(this.index);
     return this._centerPoint;
+  }
+
+  get centerLonLat() {
+    return vector3toLonLat(this.centerPoint);
   }
 
   faces() {
@@ -69,5 +76,20 @@ export default class Hex {
 
   cornerLonLats() {
     return unifyLongitudes(this.corners().map(vector3toLonLat));
+  }
+
+  zAxisCorners() {
+    const [longitude, latitude] = this.centerLonLat;
+    const corners = this.corners();
+
+    const counterLongAngle = _N(longitude).rad().times(-1).value;
+    const counterLatAngle = Math.asin(this.centerPoint.y);
+    console.log('asin counter angle:', counterLatAngle);
+
+    return corners.map((point) => {
+      const cLonPoint = point.clone().applyAxisAngle(NORTH, counterLongAngle);
+      const cLatPoint = cLonPoint.applyAxisAngle(LAT90, counterLatAngle);
+      return cLatPoint;
+    });
   }
 }

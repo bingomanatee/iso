@@ -4,8 +4,6 @@ const _ = require('lodash');
 const Decimal = require('decimal.js');
 
 const { Vector3 } = THREE;
-console.log('vector3:', Vector3);
-
 const r90 = Math.PI / 2;
 const r360 = Math.PI * 2;
 
