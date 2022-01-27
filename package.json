@@ -21,7 +21,7 @@
     "eslint-plugin-react-hooks": "^2.1.1",
     "is": "^3.3.0",
     "lodash": "^4.17.15",
-    "three": "^0.110.0"
+    "three": "^0.137.0"
   },
   "devDependencies": {
     "canvas": "^2.6.0",
